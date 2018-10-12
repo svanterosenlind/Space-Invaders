@@ -40,6 +40,8 @@ def draw_shots(screen, game, images, mode):
 def draw_invaders(screen, game, images, mode):
     for invadercol in game.invaders:
         for invader in invadercol:
+            if invader is None:
+                continue
             if invader.variant == 1:
                 screen.blit(images['invader1'][mode], (invader.xpos, invader.ypos))
             elif invader.variant == 2:
@@ -116,3 +118,5 @@ if __name__ == '__main__':
             shot_timer -= 1
         if space and shot_timer == 0:
             shot_timer = 24
+
+        game.detect_shot_collisions()

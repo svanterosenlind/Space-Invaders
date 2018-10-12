@@ -24,6 +24,8 @@ class Game:
         self.spaceship = Spaceship()
         self.shots = []
 
+
+
     def leftmost_invader(self):
         """Find the first column of invaders that contains living invaders. Return the first invader in that column.
         If all invaders are dead, return -1."""
@@ -103,6 +105,13 @@ class Game:
         if sh is not None:
             self.shots.append(sh)
 
+    def detect_shot_collisions(self):
+        for shot in self.shots[::-1]:
+            for col in self.invaders:
+                for inv in col:
+                    if shot.detect_collision(inv):
+                        inv = None
+                        self.shots.remove(shot)
 
 class Invader:
     def __init__(self, pos, variant):
@@ -111,23 +120,46 @@ class Invader:
         self.variant = variant
         if variant == 1:
             self.width = 48
+            self.height = 32
         elif variant == 2:
             self.width = 44
+            self.height = 32
         elif variant == 3:
             self.width = 32
+            self.height = 32
 
     def shoot(self):
-        return Shot(self.xpos+self.width//2, self.ypos, 1, 1)
+        return Shot(self.xpos+self.width//2, self.ypos, 1)
 
 
 class Shot:
-    def __init__(self, xpos, ypos, velocity, variant):
+    def __init__(self, xpos, ypos, variant):
         self.variant = variant
         self.xpos = xpos
         self.ypos = ypos
-        self.velocity = velocity
-        self.width = 2
-        self.height = 6
+        if variant == 1:
+            self.width = 12
+            self.height = 28
+            self.velocity = 1
+        elif variant == 2:
+            self.width = 4
+            self.height = 12
+            self.velocity = -4
+
+    def detect_collision(self, obj):
+        if self.variant == 2:    # Player shot
+            if (corners(obj)[0] <= corners(self)[0] <= corners(obj)[0]) and \
+                    (corners(obj)[1] <= corners(self)[1] <= corners(obj)[1]):
+                return True
+        elif self.variant in [1, 3]:     # Invader shot TODO: fix this so it works
+            if (corners(self)[0] <= corners(obj)[0] <= corners(self)[0]) and \
+                    (corners(self)[1] <= corners(obj)[1] <= corners(self)[1]):
+                return True
+        return False
+
+
+def corners(obj):
+    return [(obj.xpos, obj.ypos), (obj.xpos + obj.width, obj.ypos + obj.height)]
 
 
 class Spaceship:
@@ -135,6 +167,7 @@ class Spaceship:
         self.xpos = 100
         self.ypos = 700
         self.width = 52
+        self.height = 28
         self.max_velocity = 4
         self.lives = 3
         self.shot_timer = 0
@@ -156,7 +189,7 @@ class Spaceship:
         self.shot_timer -= 1
         if self.shot_timer < 0 and space:
             self.shot_timer = 20
-            return Shot(self.xpos + self.width//2, self.ypos - 12, -4, 2)
+            return Shot(self.xpos + self.width//2, self.ypos - 12, 2)
 
 
 class Barricade:
@@ -174,3 +207,4 @@ def invader_type(row):
         return 2
     elif row in [3, 4]:
         return 1
+
