@@ -59,13 +59,17 @@ if __name__ == '__main__':
     game = Game()
     screen, font, images = setup_graphics()
     running = True
-    invader_step = 20
+    invader_step = 100
+    shot_step = 96
     t = 0
     steps = 0
     invader_dir = 1
     invader_mode = 0
     shot_mode = 0
+    cl = pygame.time.Clock()
     while running:
+        cl.tick(200)
+        print(str(cl.get_fps))
         t += 1
         screen.fill((0, 128, 255))
         draw_mouse_pos(screen, font, pygame.mouse.get_pos()[0], pygame.mouse.get_pos()[1])
@@ -92,4 +96,5 @@ if __name__ == '__main__':
                 invader_step -= 2
         game.invader_shoot()
         game.move_shots()
-        shot_mode = 1 - shot_mode
+        if t % shot_step == 0:
+            shot_mode = 1 - shot_mode
