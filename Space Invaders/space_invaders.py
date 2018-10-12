@@ -2,7 +2,7 @@ import random
 
 class Game:
     def __init__(self):
-        self.invader_grid_width = 70
+        self.invader_grid_width = 90
         self.invader_grid_height = 70
         self.invader_space = (100, 1100)
         # Generate aliens
@@ -95,6 +95,14 @@ class Game:
         for l in delete_shots[::-1]:
             self.shots.pop(l)
 
+    def move_spaceship(self, left, right):
+        self.spaceship.move(left, right)
+
+    def spaceship_shoot(self, space):
+        sh = self.spaceship.shoot(space)
+        if sh is not None:
+            self.shots.append(sh)
+
 
 class Invader:
     def __init__(self, pos, variant):
@@ -129,6 +137,26 @@ class Spaceship:
         self.width = 52
         self.max_velocity = 4
         self.lives = 3
+        self.shot_timer = 0
+
+    def move(self, left, right):
+        if left and right:
+            return
+        elif left:
+            self.xpos -= self.max_velocity
+        elif right:
+            self.xpos += self.max_velocity
+
+        if self.xpos > 1200 - self.width:
+            self.xpos = 1200 - self.width
+        elif self.xpos < 0:
+            self.xpos = 0
+
+    def shoot(self, space):
+        self.shot_timer -= 1
+        if self.shot_timer < 0 and space:
+            self.shot_timer = 20
+            return Shot(self.xpos + self.width//2, self.ypos - 12, -4, 2)
 
 
 class Barricade:
