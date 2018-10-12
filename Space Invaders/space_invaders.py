@@ -18,7 +18,8 @@ class Game:
         # Generate barricades
         self.barricades = []
         for bar in range(4):
-            self.barricades.append(Barricade(5+bar*6))
+            gridpoint = 100 + 1000//4 * bar + (1000//4-88)//2
+            self.barricades.append(Barricade(gridpoint, 600))
 
         self.spaceship = Spaceship()
         self.shots = []
@@ -78,11 +79,10 @@ class Game:
 
     def invader_shoot(self):
         for col in self.invaders:
-            if random.random() > 0.97:
+            if random.random() > 0.999:
                 for inv in col[::-1]:
                     if inv is not None:
                         self.shots.append(inv.shoot())
-                        print("Shots fired")
                         break
 
     def move_shots(self):
@@ -109,7 +109,7 @@ class Invader:
             self.width = 32
 
     def shoot(self):
-        return Shot(self.xpos+self.width//2, self.ypos, 16, 1)
+        return Shot(self.xpos+self.width//2, self.ypos, 1, 1)
 
 
 class Shot:
@@ -124,17 +124,19 @@ class Shot:
 
 class Spaceship:
     def __init__(self):
-        self.position = 0
-        self.width = 15
+        self.xpos = 100
+        self.ypos = 700
+        self.width = 52
         self.max_velocity = 4
         self.lives = 3
 
 
 class Barricade:
-    def __init__(self, position):
+    def __init__(self, xpos, ypos):
         self.hits_remaining = 5
-        self.width = 20
-        self.position = position
+        self.width = 88
+        self.xpos = xpos
+        self.ypos = ypos
 
 
 def invader_type(row):

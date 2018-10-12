@@ -18,21 +18,24 @@ def setup_graphics():
                         imagelist.append(pygame.image.load(image.path))
                 images[entry.name] = imagelist
             else:
-                images[entry.name] = pygame.image.load(entry.path)
+                images[entry.name[:-4]] = pygame.image.load(entry.path)
 
     font = pygame.font.SysFont("calibri", 14)
     return screen, font, images
+
+
+def draw_mouse_pos(screen, fn, x, y):
+    pos_text = fn.render(f"{x}, {y}", True, (0, 0, 0))
+    screen.blit(pos_text, (10, 10))
 
 
 def draw_shots(screen, game, images, mode):
     for shot in game.shots:
         if shot.variant == 1:
             screen.blit(images["invadershot"][mode], (shot.xpos, shot.ypos))
-            print("Shot drawn")
 
 
 def draw_invaders(screen, game, images, mode):
-    screen.fill((0, 128, 255))
     for invadercol in game.invaders:
         for invader in invadercol:
             if invader.variant == 1:
@@ -41,6 +44,15 @@ def draw_invaders(screen, game, images, mode):
                 screen.blit(images['invader2'][mode], (invader.xpos, invader.ypos))
             elif invader.variant == 3:
                 screen.blit(images['invader3'][mode], (invader.xpos, invader.ypos))
+
+
+def draw_barricades(screen, game, images):
+    for bar in game.barricades:
+        screen.blit(images["barricade"], (bar.xpos, bar.ypos))
+
+
+def draw_spaceship(screen, game, images):
+    screen.blit(images["spaceship"], (game.spaceship.xpos, game.spaceship.ypos))
 
 
 if __name__ == '__main__':
@@ -55,8 +67,11 @@ if __name__ == '__main__':
     shot_mode = 0
     while running:
         t += 1
+        screen.fill((0, 128, 255))
+        draw_mouse_pos(screen, font, pygame.mouse.get_pos()[0], pygame.mouse.get_pos()[1])
         draw_shots(screen, game, images, shot_mode)
         draw_invaders(screen, game, images, invader_mode)
+        draw_barricades(screen, game, images)
         pygame.display.flip()
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
