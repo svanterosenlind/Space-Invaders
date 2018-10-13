@@ -59,6 +59,18 @@ def draw_spaceship(screen, game, images):
     screen.blit(images["spaceship"], (game.spaceship.xpos, game.spaceship.ypos))
 
 
+def draw_explosion(screen, images, destroyed_list):
+    destroy_destroy_list = []
+    for inv in destroyed_list.keys():
+        screen.blit(images["explosion"], inv)
+        destroyed_list[inv] -= 1
+        if destroyed_list[inv] < 0:
+            destroy_destroy_list.append(inv)
+    for destroy in destroy_destroy_list:
+        destroyed_list.pop(destroy)
+    return destroyed_list
+
+
 if __name__ == '__main__':
     game = Game()
     screen, font, images = setup_graphics()
@@ -74,6 +86,7 @@ if __name__ == '__main__':
     invader_mode = 0
     shot_mode = 0
     shot_timer = 0
+    destroyed = {}
     cl = pygame.time.Clock()
     while running:
         cl.tick(200)
@@ -119,4 +132,7 @@ if __name__ == '__main__':
         if space and shot_timer == 0:
             shot_timer = 24
 
-        game.detect_shot_collisions()
+        for coord in game.detect_shot_collisions():
+            destroyed[coord] = 16
+        destroyed = draw_explosion(screen, images, destroyed)
+        pygame.display.flip()

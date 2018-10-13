@@ -25,7 +25,6 @@ class Game:
         self.shots = []
 
 
-
     def leftmost_invader(self):
         """Find the first column of invaders that contains living invaders. Return the first invader in that column.
         If all invaders are dead, return -1."""
@@ -106,12 +105,27 @@ class Game:
             self.shots.append(sh)
 
     def detect_shot_collisions(self):
+        destroyed = []
         for shot in self.shots[::-1]:
-            for col in self.invaders:
-                for inv in col:
-                    if shot.detect_collision(inv):
-                        inv = None
-                        self.shots.remove(shot)
+            if shot.variant == 2:
+                for col in self.invaders:   # Player hits invaders
+                    for invnum in range(len(col)):
+                        if shot.detect_collision(col[invnum]):
+                            destroyed.append((col[invnum].xpos, col[invnum].ypos))
+                            col[invnum] = None
+                            self.shots.remove(shot)
+            elif shot.variant in [1,3]:
+                if shot.detect_collision(self.spaceship):
+                    self.spaceship.lives -= 1
+                    destroyed.append((self.spaceship.xpos, self.spaceship.ypos))
+                    self.shots.remove(shot)
+            for bar in self.barricades:
+                if shot.detect_collision(bar):
+                    bar.hits_remaining -= 1
+                    bar.hits.append((shot.xpos, shot.ypos))
+                    self.shots.remove(shot)
+        return destroyed
+
 
 class Invader:
     def __init__(self, pos, variant):
@@ -147,14 +161,16 @@ class Shot:
             self.velocity = -4
 
     def detect_collision(self, obj):
+        if obj is None:
+            return False
         if self.variant == 2:    # Player shot
-            if (corners(obj)[0] <= corners(self)[0] <= corners(obj)[0]) and \
-                    (corners(obj)[1] <= corners(self)[1] <= corners(obj)[1]):
-                return True
+            return ((self.xpos + self.width >= obj.xpos) and (self.xpos <= obj.xpos + obj.width) and
+                    (self.ypos + self.height >= obj.ypos) and (
+                        self.ypos <= obj.ypos + obj.height))
         elif self.variant in [1, 3]:     # Invader shot TODO: fix this so it works
-            if (corners(self)[0] <= corners(obj)[0] <= corners(self)[0]) and \
-                    (corners(self)[1] <= corners(obj)[1] <= corners(self)[1]):
-                return True
+            return ((self.xpos + self.width >= obj.xpos) and (self.xpos <= obj.xpos + obj.width) and
+                    (self.ypos + self.height >= obj.ypos) and (
+                            self.ypos <= obj.ypos + obj.height))
         return False
 
 
@@ -196,9 +212,10 @@ class Barricade:
     def __init__(self, xpos, ypos):
         self.hits_remaining = 5
         self.width = 88
+        self.height = 64
         self.xpos = xpos
         self.ypos = ypos
-
+        self.hits = []
 
 def invader_type(row):
     if row == 0:
