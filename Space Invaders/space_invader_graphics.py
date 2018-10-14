@@ -59,6 +59,11 @@ def draw_spaceship(screen, game, images):
     screen.blit(images["spaceship"], (game.spaceship.xpos, game.spaceship.ypos))
 
 
+def draw_lives(screen, game, images):
+
+    for l in range(game.spaceship.lives):
+        screen.blit(images["spaceship"], (10+80*l, 750))
+
 def draw_explosion(screen, images, destroyed_list):
     destroy_destroy_list = []
     for inv in destroyed_list.keys():
@@ -131,7 +136,7 @@ if __name__ == '__main__':
             shot_timer -= 1
         if space and shot_timer == 0:
             shot_timer = 24
-
+        draw_lives(screen, game, images)
         for coord in game.detect_shot_collisions():
             destroyed[coord] = 16
         destroyed = draw_explosion(screen, images, destroyed)
