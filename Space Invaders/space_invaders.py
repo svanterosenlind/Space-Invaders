@@ -5,6 +5,7 @@ class Game:
         self.invader_grid_width = 90
         self.invader_grid_height = 70
         self.invader_space = (100, 1100)
+        self.score = 0
         # Generate aliens
         aliencoords = [[(self.invader_grid_width * x, 100 + self.invader_grid_height * y) for y in range(5)]
                        for x in range(11)]  # aliencoords[0] is first column TODO: adjust coordinates to match game
@@ -75,8 +76,8 @@ class Game:
                 if inv is not None:
                     inv.ypos += 8
 
-    def destroy_invader(self):
-        pass
+    def destroy_invader(self, inv):
+        self.score += inv.variant
 
     def invader_shoot(self):
         for col in self.invaders:
@@ -112,6 +113,7 @@ class Game:
                     for invnum in range(len(col)):
                         if shot.detect_collision(col[invnum]):
                             destroyed.append((col[invnum].xpos, col[invnum].ypos))
+                            self.destroy_invader(col[invnum])
                             col[invnum] = None
                             self.shots.remove(shot)
         return destroyed

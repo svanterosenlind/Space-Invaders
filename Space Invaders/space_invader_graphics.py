@@ -53,7 +53,7 @@ def draw_invaders(screen, game, images, mode):
 def draw_barricades(screen, game, images):
     for bar in game.barricades:
         if bar is not None:
-            screen.blit(images["barricade"], (bar.xpos, bar.ypos))
+            screen.blit(images["barricade"][4-bar.hits_remaining], (bar.xpos, bar.ypos))
 
 
 def draw_spaceship(screen, game, images):
@@ -92,6 +92,9 @@ def draw_explosion(screen, images, destroyed_list):
         destroyed_list.pop(destroy)
     return destroyed_list
 
+def draw_score(screen, game, fn):
+    score_text = fn.render(f"Score: {game.score}", True, (255, 255, 255))
+    screen.blit(score_text, (750, 10))
 
 if __name__ == '__main__':
     game = Game()
@@ -110,6 +113,8 @@ if __name__ == '__main__':
     destroyed = {}
     cl = pygame.time.Clock()
     while running:
+        if game.leftmost_invader() == -1:
+            break
         cl.tick(60)
         t += 1
         screen.fill((0, 128, 255))
@@ -119,6 +124,7 @@ if __name__ == '__main__':
         draw_barricades(screen, game, images)
         draw_spaceship(screen, game, images)
         draw_lives(screen, game, images)
+        draw_score(screen, game, font)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
