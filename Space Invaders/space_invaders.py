@@ -6,7 +6,7 @@ class Game:
         self.invader_grid_height = 70
         self.invader_space = (100, 1100)
         # Generate aliens
-        aliencoords = [[(self.invader_grid_width * x, self.invader_grid_height * y) for y in range(5)]
+        aliencoords = [[(self.invader_grid_width * x, 100 + self.invader_grid_height * y) for y in range(5)]
                        for x in range(11)]  # aliencoords[0] is first column TODO: adjust coordinates to match game
         self.invaders = [[None for y in range(5)] for x in range(11)]
         for col in range(len(aliencoords)):
@@ -80,7 +80,7 @@ class Game:
 
     def invader_shoot(self):
         for col in self.invaders:
-            if random.random() > 0.999:
+            if random.random() > 0.997:
                 for inv in col[::-1]:
                     if inv is not None:
                         self.shots.append(inv.shoot())
@@ -104,7 +104,7 @@ class Game:
         if sh is not None:
             self.shots.append(sh)
 
-    def detect_shot_collisions(self):
+    def detect_shot_invader(self):
         destroyed = []
         for shot in self.shots[::-1]:
             if shot.variant == 2:
@@ -114,17 +114,27 @@ class Game:
                             destroyed.append((col[invnum].xpos, col[invnum].ypos))
                             col[invnum] = None
                             self.shots.remove(shot)
-            elif shot.variant in [1,3]:
+        return destroyed
+
+    def detect_shot_spaceship(self):
+        for shot in self.shots[::-1]:
+            if shot.variant in [1, 3]:
                 if shot.detect_collision(self.spaceship):
                     self.spaceship.lives -= 1
-                    destroyed.append((self.spaceship.xpos, self.spaceship.ypos))
-                    self.shots.remove(shot)
-            for bar in self.barricades:
-                if shot.detect_collision(bar):
-                    bar.hits_remaining -= 1
-                    bar.hits.append((shot.xpos, shot.ypos))
-                    self.shots.remove(shot)
-        return destroyed
+                    self.shots = []
+                    return True
+        return False
+
+    def detect_shot_barricade(self):
+        for shot in self.shots[::-1]:
+            for n in range(len(self.barricades)):
+                if self.barricades[n] is not None:
+                    if shot.detect_collision(self.barricades[n]):
+                        self.barricades[n].hits_remaining -= 1
+                        self.barricades[n].hits.append((shot.xpos, shot.ypos))
+                        self.shots.remove(shot)
+                        if self.barricades[n].hits_remaining <= 0:
+                            self.barricades[n] = None
 
 
 class Invader:
@@ -154,11 +164,11 @@ class Shot:
         if variant == 1:
             self.width = 12
             self.height = 28
-            self.velocity = 1
+            self.velocity = 6
         elif variant == 2:
             self.width = 4
             self.height = 12
-            self.velocity = -4
+            self.velocity = -12
 
     def detect_collision(self, obj):
         if obj is None:
@@ -172,10 +182,6 @@ class Shot:
                     (self.ypos + self.height >= obj.ypos) and (
                             self.ypos <= obj.ypos + obj.height))
         return False
-
-
-def corners(obj):
-    return [(obj.xpos, obj.ypos), (obj.xpos + obj.width, obj.ypos + obj.height)]
 
 
 class Spaceship:
@@ -204,18 +210,19 @@ class Spaceship:
     def shoot(self, space):
         self.shot_timer -= 1
         if self.shot_timer < 0 and space:
-            self.shot_timer = 20
+            self.shot_timer = 60
             return Shot(self.xpos + self.width//2, self.ypos - 12, 2)
 
 
 class Barricade:
     def __init__(self, xpos, ypos):
-        self.hits_remaining = 5
+        self.hits_remaining = 4
         self.width = 88
         self.height = 64
         self.xpos = xpos
         self.ypos = ypos
         self.hits = []
+
 
 def invader_type(row):
     if row == 0:

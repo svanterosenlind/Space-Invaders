@@ -52,7 +52,8 @@ def draw_invaders(screen, game, images, mode):
 
 def draw_barricades(screen, game, images):
     for bar in game.barricades:
-        screen.blit(images["barricade"], (bar.xpos, bar.ypos))
+        if bar is not None:
+            screen.blit(images["barricade"], (bar.xpos, bar.ypos))
 
 
 def draw_spaceship(screen, game, images):
@@ -60,9 +61,25 @@ def draw_spaceship(screen, game, images):
 
 
 def draw_lives(screen, game, images):
-
     for l in range(game.spaceship.lives):
         screen.blit(images["spaceship"], (10+80*l, 750))
+
+
+def spaceship_die(screen, game, images):
+    c = pygame.time.Clock()
+    for a in range(5):
+        screen.fill((0, 128, 255))
+        draw_invaders(screen, game, images, invader_mode)
+        draw_barricades(screen, game, images)
+        draw_spaceship(screen, game, images)
+        draw_lives(screen, game, images)
+        if a % 2 == 0:
+            screen.blit(images["spaceship_explosion"][0], (game.spaceship.xpos, game.spaceship.ypos))
+        else:
+            screen.blit(images["spaceship_explosion"][1], (game.spaceship.xpos, game.spaceship.ypos))
+        pygame.display.flip()
+        c.tick(2)
+
 
 def draw_explosion(screen, images, destroyed_list):
     destroy_destroy_list = []
@@ -80,8 +97,8 @@ if __name__ == '__main__':
     game = Game()
     screen, font, images = setup_graphics()
     running = True
-    invader_step = 100
-    shot_step = 64
+    invader_step = 20
+    shot_step = 6
     t = 0
     steps = 0
     left = False
@@ -90,11 +107,10 @@ if __name__ == '__main__':
     invader_dir = 1
     invader_mode = 0
     shot_mode = 0
-    shot_timer = 0
     destroyed = {}
     cl = pygame.time.Clock()
     while running:
-        cl.tick(200)
+        cl.tick(60)
         t += 1
         screen.fill((0, 128, 255))
         draw_mouse_pos(screen, font, pygame.mouse.get_pos()[0], pygame.mouse.get_pos()[1])
@@ -102,7 +118,7 @@ if __name__ == '__main__':
         draw_invaders(screen, game, images, invader_mode)
         draw_barricades(screen, game, images)
         draw_spaceship(screen, game, images)
-        pygame.display.flip()
+        draw_lives(screen, game, images)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
@@ -120,6 +136,8 @@ if __name__ == '__main__':
                     right = False
                 if event.key == pygame.K_SPACE:
                     space = False
+        if t % shot_step == 0:
+            shot_mode = 1 - shot_mode
         if t % invader_step == 0:
             invader_dir = game.move_invaders(invader_dir)
             invader_mode = 1-invader_mode
@@ -130,14 +148,10 @@ if __name__ == '__main__':
         game.spaceship_shoot(space)
         game.invader_shoot()
         game.move_shots()
-        if t % shot_step == 0:
-            shot_mode = 1 - shot_mode
-        if shot_timer != 0:
-            shot_timer -= 1
-        if space and shot_timer == 0:
-            shot_timer = 24
-        draw_lives(screen, game, images)
-        for coord in game.detect_shot_collisions():
-            destroyed[coord] = 16
+        game.detect_shot_barricade()
+        if game.detect_shot_spaceship():
+            spaceship_die(screen, game, images)
+        for coord in game.detect_shot_invader():
+            destroyed[coord] = 8
         destroyed = draw_explosion(screen, images, destroyed)
         pygame.display.flip()
