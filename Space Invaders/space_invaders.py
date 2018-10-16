@@ -4,10 +4,10 @@ class Game:
     def __init__(self):
         self.invader_grid_width = 90
         self.invader_grid_height = 70
-        self.invader_space = (100, 1100)
+        self.invader_space = (50, 1150)
         self.score = 0
         # Generate aliens
-        aliencoords = [[(self.invader_grid_width * x, 100 + self.invader_grid_height * y) for y in range(5)]
+        aliencoords = [[(self.invader_grid_width * x, 200 + self.invader_grid_height * y) for y in range(5)]
                        for x in range(11)]  # aliencoords[0] is first column TODO: adjust coordinates to match game
         self.invaders = [[None for y in range(5)] for x in range(11)]
         for col in range(len(aliencoords)):
@@ -53,7 +53,7 @@ class Game:
             for col in self.invaders:
                 for inv in col:
                     if inv is not None:
-                        inv.xpos += 4
+                        inv.xpos += 8
             if self.rightmost_invader().xpos + self.invader_grid_width/2 > self.invader_space[1]:
                 self.move_down_invaders()
                 return -1
@@ -63,7 +63,7 @@ class Game:
             for col in self.invaders:
                 for inv in col:
                     if inv is not None:
-                        inv.xpos -= 4
+                        inv.xpos -= 8
             if self.leftmost_invader().xpos + self.invader_grid_width/2 < self.invader_space[0]:
                 self.move_down_invaders()
                 return 1
@@ -74,7 +74,7 @@ class Game:
         for col in self.invaders:
             for inv in col:
                 if inv is not None:
-                    inv.ypos += 8
+                    inv.ypos += 12
 
     def destroy_invader(self, inv):
         self.score += inv.variant
@@ -117,6 +117,15 @@ class Game:
                             col[invnum] = None
                             self.shots.remove(shot)
         return destroyed
+
+    def detect_shot_shot(self):
+        for shot1 in self.shots[::-1]:
+            if shot1.variant == 2:
+                for shot2 in self.shots[::-1]:
+                    if shot2.variant in [1, 3]:
+                        if shot1.detect_collision(shot2):
+                            self.shots.remove(shot1)
+                            self.shots.remove(shot2)
 
     def detect_shot_spaceship(self):
         for shot in self.shots[::-1]:
