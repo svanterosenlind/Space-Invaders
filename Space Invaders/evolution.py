@@ -1,14 +1,23 @@
 from space_invaders import Game
 import random
 
+
 class Monkey:
     def __init__(self):
         self.DNA = []
         """Movement: [0]Shot perception height, [1]shot perception width, [2]shot weight, 
-        """
-        for gene in range(9):
-            self.DNA.append(random.random())
-        range[]
+            [3]Barricade weight, [4]we, 
+            Shooting: if [5]Invader velocity [6]lowest alien height [7]barricade distance is in [8] +- [9]"""
+        self.DNA[0] = random.randint(0, 700)
+        self.DNA[1] = random.randint(0, 1000)
+        self.DNA[2] = random.random() * 2 - 1
+        self.DNA[3] = random.random() * 2 - 1
+        self.DNA[4] = random.randint(0, 700)
+        self.DNA[5] = random.random() * 2 - 1
+        self.DNA[6] = random.randint(0, 700)
+        self.DNA[7] = random.randint(0, 700)
+        self.DNA[8] = random.random() * 1000
+        self.DNA[9] = random.random() * 300
 
     def calc_fitness(self):
         lives = 3
@@ -16,6 +25,33 @@ class Monkey:
         while lives > 0:
             lives, score = run_game(lives, score, self.DNA)
         return score
+
+    def move(self, game):
+        closest_shot_height = 0
+        closest_shot_x = 300
+        for shot in game.shots:
+            if shot.variant != 2:
+                if 730 > shot.ypos > closest_shot_height and game.spaceship.ypos - shot.ypos < self.DNA[0] \
+                        and abs(game.spaceship.xpos - shot.xpos) < self.DNA[1]:
+                    closest_shot_height = shot.ypos
+                    closest_shot_x = shot.xpos -game.spaceship.xpos
+        shot_factor = self.DNA[2] * closest_shot_x
+
+        closest_bar = 1000
+        for bar in game.barricades:
+            if abs(bar.xpos + bar.width/2 - game.spaceship.xpos) < closest_bar and bar is not None:
+                closest_bar = bar.xpos + bar.width/2 - game.spaceship.xpos
+        barricade_factor = self.DNA[3]
+
+        steer = shot_factor + barricade_factor + self.DNA[4]
+        if steer <= 0:
+            return [-max(steer/1500, 1), 0]
+        else:
+            return [0, max(1,steer/1500)]
+
+    def shoot(self, game):
+        
+
 
 
 def run_game(lives, score, DNA):
