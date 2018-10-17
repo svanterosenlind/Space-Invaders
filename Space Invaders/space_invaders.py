@@ -1,13 +1,13 @@
 import random
 
 class Game:
-    def __init__(self):
+    def __init__(self, lives):
         self.invader_grid_width = 90
         self.invader_grid_height = 70
         self.invader_space = (50, 1150)
         self.score = 0
         # Generate aliens
-        aliencoords = [[(self.invader_grid_width * x, 200 + self.invader_grid_height * y) for y in range(5)]
+        aliencoords = [[(self.invader_grid_width * x, 150 + self.invader_grid_height * y) for y in range(5)]
                        for x in range(11)]  # aliencoords[0] is first column TODO: adjust coordinates to match game
         self.invaders = [[None for y in range(5)] for x in range(11)]
         for col in range(len(aliencoords)):
@@ -22,7 +22,7 @@ class Game:
             gridpoint = 100 + 1000//4 * bar + (1000//4-88)//2
             self.barricades.append(Barricade(gridpoint, 600))
 
-        self.spaceship = Spaceship()
+        self.spaceship = Spaceship(lives)
         self.shots = []
 
 
@@ -196,13 +196,13 @@ class Shot:
 
 
 class Spaceship:
-    def __init__(self):
+    def __init__(self, lives):
         self.xpos = 100
         self.ypos = 700
         self.width = 52
         self.height = 28
         self.max_velocity = 4
-        self.lives = 3
+        self.lives = lives
         self.shot_timer = 0
 
     def move(self, left, right):

@@ -65,7 +65,7 @@ def draw_lives(screen, game, images):
         screen.blit(images["spaceship"], (10+80*l, 750))
 
 
-def spaceship_die(screen, game, images):
+def spaceship_die(screen, game, images, invader_mode):
     c = pygame.time.Clock()
     for a in range(5):
         screen.fill((0, 128, 255))
@@ -92,88 +92,102 @@ def draw_explosion(screen, images, destroyed_list):
         destroyed_list.pop(destroy)
     return destroyed_list
 
-def draw_score(screen, game, fn):
-    score_text = fn.render(f"Score: {game.score}", True, (255, 255, 255))
+
+def draw_score(screen, sc, fn):
+    score_text = fn.render(f"Score: {sc}", True, (255, 255, 255))
     screen.blit(score_text, (750, 10))
 
 
+def run_game(screen, images, fn, lives, score):
+    invader_step = 20
+    shot_step = 6
+    t = 0
+    steps = 0
+    left = False
+    right = False
+    space = False
+    invader_dir = 1
+    invader_mode = 0
+    shot_mode = 0
+    destroyed = {}
+    cl = pygame.time.Clock()
+    game = Game(lives)
 
+    while True:
+        if game.leftmost_invader() == -1:    # If the player has won
+            break
+        cl.tick(60)
+        t += 1
+        screen.fill((0, 128, 255))
+        draw_mouse_pos(screen, fn, pygame.mouse.get_pos()[0], pygame.mouse.get_pos()[1])
+        draw_shots(screen, game, images, shot_mode)
+        draw_invaders(screen, game, images, invader_mode)
+        draw_barricades(screen, game, images)
+        draw_spaceship(screen, game, images)
+        draw_lives(screen, game, images)
+        draw_score(screen, game.score + score, fn)
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                return [game.score, 0]
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_LEFT:
+                    left = True
+                if event.key == pygame.K_RIGHT:
+                    right = True
+                if event.key == pygame.K_SPACE:
+                    space = True
+            elif event.type == pygame.KEYUP:
+                if event.key == pygame.K_LEFT:
+                    left = False
+                if event.key == pygame.K_RIGHT:
+                    right = False
+                if event.key == pygame.K_SPACE:
+                    space = False
+        if t % shot_step == 0:
+            shot_mode = 1 - shot_mode
+        if t % invader_step == 0:
+            invader_dir = game.move_invaders(invader_dir)
+            invader_mode = 1-invader_mode
+            steps += 1
+            if steps % 36 == 0 and invader_step > 2:
+                invader_step -= 2
+        game.move_spaceship(left, right)
+        game.spaceship_shoot(space)
+        game.invader_shoot()
+        game.move_shots()
+        game.detect_shot_barricade()
+        game.detect_shot_shot()
+        if game.detect_shot_spaceship():
+            spaceship_die(screen, game, images, invader_mode)
+            if game.spaceship.lives == 0:
+                return [game.score, 0]
+        for coord in game.detect_shot_invader():
+            destroyed[coord] = 8
+        destroyed = draw_explosion(screen, images, destroyed)
+        pygame.display.flip()
+    return [game.score, game.spaceship.lives]
 
 
 def main():
     screen, font, images = setup_graphics()
     running = True
     score = 0
+    lives = 3
+    round_score = 0
     while running:
-        game = Game()
-        invader_step = 20
-        shot_step = 6
-        t = 0
-        steps = 0
-        left = False
-        right = False
-        space = False
-        invader_dir = 1
-        invader_mode = 0
-        shot_mode = 0
-        destroyed = {}
-        cl = pygame.time.Clock()
-        while running:
-            if game.leftmost_invader() == -1: # If the player has won
-                score += game.score
-                break
-            cl.tick(60)
-            t += 1
-            screen.fill((0, 128, 255))
-            draw_mouse_pos(screen, font, pygame.mouse.get_pos()[0], pygame.mouse.get_pos()[1])
-            draw_shots(screen, game, images, shot_mode)
-            draw_invaders(screen, game, images, invader_mode)
-            draw_barricades(screen, game, images)
-            draw_spaceship(screen, game, images)
-            draw_lives(screen, game, images)
-            draw_score(screen, game, font)
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    running = False
-                    return
-                elif event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_LEFT:
-                        left = True
-                    if event.key == pygame.K_RIGHT:
-                        right = True
-                    if event.key == pygame.K_SPACE:
-                        space = True
-                elif event.type == pygame.KEYUP:
-                    if event.key == pygame.K_LEFT:
-                        left = False
-                    if event.key == pygame.K_RIGHT:
-                        right = False
-                    if event.key == pygame.K_SPACE:
-                        space = False
-            if t % shot_step == 0:
-                shot_mode = 1 - shot_mode
-            if t % invader_step == 0:
-                invader_dir = game.move_invaders(invader_dir)
-                invader_mode = 1-invader_mode
-                steps += 1
-                if steps % 36 == 0 and invader_step > 2:
-                    invader_step -= 2
-            game.move_spaceship(left, right)
-            game.spaceship_shoot(space)
-            game.invader_shoot()
-            game.move_shots()
-            game.detect_shot_barricade()
-            game.detect_shot_shot()
-            if game.detect_shot_spaceship():
-                spaceship_die(screen, game, images)
-                if game.spaceship.lives == 0:
-                    print(f"Final Score: {score + game.score}")
-                    break
-            for coord in game.detect_shot_invader():
-                destroyed[coord] = 8
-            destroyed = draw_explosion(screen, images, destroyed)
-            pygame.display.flip()
-
+        [round_score, lives] = run_game(screen, images, font, lives, score)
+        score += round_score
+    highscores_read = open("highscores.txt")
+    highscore_list = []
+    added = False
+    for highscore in highscores_read:
+        highscore_list.append(highscore)
+        if score > highscore and not added:
+            highscore_list.append(score)
+            added = False
+    highscores_write = open("highscores.txt", "w")
+    for highscore in highscore_list:
+        highscores_write.write(highscore)
 
 if __name__ == '__main__':
     main()
