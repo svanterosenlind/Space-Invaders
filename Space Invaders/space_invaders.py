@@ -206,12 +206,12 @@ class Spaceship:
         self.shot_timer = 0
 
     def move(self, left, right):
-        if left and right:
+        if left == right:
             return
-        elif left:
-            self.xpos -= self.max_velocity
-        elif right:
-            self.xpos += self.max_velocity
+        elif left != 0:
+            self.xpos -= left* self.max_velocity
+        elif right !=0:
+            self.xpos += right* self.max_velocity
 
         if self.xpos > 1200 - self.width:
             self.xpos = 1200 - self.width
@@ -220,7 +220,7 @@ class Spaceship:
 
     def shoot(self, space):
         self.shot_timer -= 1
-        if self.shot_timer < 0 and space:
+        if self.shot_timer < 0 and space != 0:
             self.shot_timer = 60
             return Shot(self.xpos + self.width//2, self.ypos - 12, 2)
 
