@@ -6,6 +6,10 @@ class Game:
         self.invader_grid_height = 70
         self.invader_space = (50, 1150)
         self.score = 0
+        self.invader_dir = 1
+        self.t = 0
+        self.steps = 0
+        self.invader_step = 20
         # Generate aliens
         aliencoords = [[(self.invader_grid_width * x, 150 + self.invader_grid_height * y) for y in range(5)]
                        for x in range(11)]  # aliencoords[0] is first column TODO: adjust coordinates to match game
@@ -25,7 +29,6 @@ class Game:
         self.spaceship = Spaceship(lives)
         self.shots = []
 
-
     def leftmost_invader(self):
         """Find the first column of invaders that contains living invaders. Return the first invader in that column.
         If all invaders are dead, return -1."""
@@ -44,11 +47,22 @@ class Game:
                     return inv
         return -1
 
-    def move_invaders(self, invader_dir):
+    def move_invaders(self):
         """Move all invaders in the invader_dir specified by invader_dir. invader_dir = 1 signals right,
         and invader_dir = -1 signals left. If any invader moves out of the designated space, the opposite invader_dir is
         returned and the invaders are moved down. If they stay within the invader space,
         the same invader_dir is returned."""
+        self.t += 1
+        stepped = False
+        if self.t % self.invader_step == 0:
+            self.invader_dir = self.step_invaders(self.invader_dir)
+            self.steps += 1
+            if self.steps % 36 == 0 and self.invader_step > 2:
+                self.invader_step -= 2
+            stepped = True
+        return stepped
+
+    def step_invaders(self, invader_dir):
         if invader_dir == 1:
             for col in self.invaders:
                 for inv in col:
@@ -188,7 +202,7 @@ class Shot:
             return ((self.xpos + self.width >= obj.xpos) and (self.xpos <= obj.xpos + obj.width) and
                     (self.ypos + self.height >= obj.ypos) and (
                         self.ypos <= obj.ypos + obj.height))
-        elif self.variant in [1, 3]:     # Invader shot TODO: fix this so it works
+        elif self.variant in [1, 3]:
             return ((self.xpos + self.width >= obj.xpos) and (self.xpos <= obj.xpos + obj.width) and
                     (self.ypos + self.height >= obj.ypos) and (
                             self.ypos <= obj.ypos + obj.height))
