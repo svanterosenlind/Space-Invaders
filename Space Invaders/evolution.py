@@ -28,13 +28,6 @@ class Monkey:
         if random.random < 0.05:
             self.DNA[random.randint(len(self.DNA))] *= (random.random()+0.5)
 
-    def calc_fitness(self):
-        lives = 3
-        score = 0
-        while lives > 0:
-            lives, score = run_game(lives, score, self)
-        return score
-
     def move(self, game):
         closest_shot_height = 0
         closest_shot_x = 300
@@ -71,23 +64,29 @@ class Monkey:
             for inv in col:
                 if inv.ypos > lowest_invader_height:
                     lowest_invader_height = inv.ypos
-        return self.DNA[8] - self.DNA[9] < lowest_invader_height ** self.DNA[6] * (game.invader_dir / game.invader_step) ** self.DNA[5] < self.DNA[8] + self.DNA[9]
+        return self.DNA[8] - self.DNA[9] < lowest_invader_height * self.DNA[6] + (game.invader_dir / game.invader_step) * self.DNA[5] < self.DNA[8] + self.DNA[9]
+
+
+def calc_fitness(m):
+    print("Calculating fitness")
+    lives = 3
+    score = 0
+    while lives > 0:
+        score, lives = run_game(lives, score, m)
+    return score
 
 
 def run_game(lives, score, monkey):
-    left = False
-    right = False
-    space = False
-
     game = Game(lives)
     while True:
         if game.leftmost_invader() == -1:
-            break
+            return [score + game.score, game.spaceship.lives]
         left, right = monkey.move(game)
         space = monkey.shoot(game)
         game.move_spaceship(left, right)
         game.spaceship_shoot(space)
         game.invader_shoot()
+        game.move_invaders()
         game.move_shots()
         game.detect_shot_barricade()
         game.detect_shot_invader()
@@ -95,8 +94,8 @@ def run_game(lives, score, monkey):
         if game.detect_shot_spaceship():
             if game.spaceship.lives == 0:
                 return [score + game.score, 0]
-    return [score + game.score, game.spaceship.lives]
-
+        if game.t > 1000000:
+            return [score + game.score, 0]
 
 def new_population(old_population):
     new_pop = []
@@ -104,17 +103,21 @@ def new_population(old_population):
     total_fitness = 0
     best_fitness = 0
     for monkey in old_population:
-        fitnesses[monkey] = monkey.calc_fitness()
+        fitnesses[monkey] = calc_fitness(monkey)
         total_fitness += fitnesses[monkey]
         if fitnesses[monkey] > best_fitness:
             best_fitness = fitnesses[monkey]
+    if total_fitness == 0:
+        for m in old_population:
+            m.randomize_DNA()
+        return old_population, 0
     for monkey in old_population:
         while True:
-            monkey1 = old_population[random.randint(len(old_population))]
+            monkey1 = old_population[random.randint(0, len(old_population))]
             if float(fitnesses[monkey1])/total_fitness > random.random():
                 break
         while True:
-            monkey2 = old_population[random.randint(len(old_population))]
+            monkey2 = old_population[random.randint(0, len(old_population))]
             if float(fitnesses[monkey2]) / total_fitness > random.random():
                 break
         new_monkey = crossover(monkey1, monkey2)
@@ -135,7 +138,7 @@ def crossover(monkey1, monkey2):
 
 def main():
     population = []
-    for a in range(20):
+    for a in range(4):
         m = Monkey()
         population.append(m)
         m.randomize_DNA()

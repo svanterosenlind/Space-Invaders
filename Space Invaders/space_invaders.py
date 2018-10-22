@@ -89,6 +89,8 @@ class Game:
             for inv in col:
                 if inv is not None:
                     inv.ypos += 12
+                    if inv.ypos > self.spaceship.ypos:
+                        self.spaceship.lives = 0
 
     def destroy_invader(self, inv):
         self.score += inv.variant
@@ -223,9 +225,9 @@ class Spaceship:
         if left == right:
             return
         elif left != 0:
-            self.xpos -= left* self.max_velocity
-        elif right !=0:
-            self.xpos += right* self.max_velocity
+            self.xpos -= left * self.max_velocity
+        elif right != 0:
+            self.xpos += right * self.max_velocity
 
         if self.xpos > 1200 - self.width:
             self.xpos = 1200 - self.width
