@@ -25,8 +25,8 @@ class Monkey:
         self.DNA.append(random.random() * 300)      # 8
 
     def mutate(self):
-        if random.random < 0.05:
-            self.DNA[random.randint(len(self.DNA))] *= (random.random()+0.5)
+        if random.random() < 0.3:
+            self.DNA[random.randint(0, len(self.DNA)-1)] *= (random.random()+0.5)
 
     def move(self, game):
         closest_shot_height = 0
@@ -82,7 +82,7 @@ def run_game(lives, score, monkey):
         if game.leftmost_invader() == -1:
             return [score + game.score, game.spaceship.lives]
         left, right = monkey.move(game)
-        space = monkey.shoot(game)
+        space = True    # monkey.shoot(game)
         game.move_spaceship(left, right)
         game.spaceship_shoot(space)
         game.invader_shoot()
@@ -113,11 +113,11 @@ def new_population(old_population):
         return old_population, 0
     for monkey in old_population:
         while True:
-            monkey1 = old_population[random.randint(0, len(old_population))]
+            monkey1 = old_population[random.randint(0, len(old_population)-1)]
             if float(fitnesses[monkey1])/total_fitness > random.random():
                 break
         while True:
-            monkey2 = old_population[random.randint(0, len(old_population))]
+            monkey2 = old_population[random.randint(0, len(old_population)-1)]
             if float(fitnesses[monkey2]) / total_fitness > random.random():
                 break
         new_monkey = crossover(monkey1, monkey2)
@@ -128,6 +128,7 @@ def new_population(old_population):
 
 def crossover(monkey1, monkey2):
     new_monkey = Monkey()
+    new_monkey.randomize_DNA()
     for a in range(len(monkey1.DNA)):
         if random.random() > 0.5:
             new_monkey.DNA[a] = monkey1.DNA[a]
@@ -138,7 +139,7 @@ def crossover(monkey1, monkey2):
 
 def main():
     population = []
-    for a in range(4):
+    for a in range(6):
         m = Monkey()
         population.append(m)
         m.randomize_DNA()
