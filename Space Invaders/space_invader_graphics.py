@@ -99,14 +99,10 @@ def draw_score(screen, sc, fn):
 
 
 def run_game(screen, images, fn, lives, score):
-    invader_step = 20
     shot_step = 6
-    t = 0
-    steps = 0
     left = False
     right = False
     space = False
-    invader_dir = 1
     invader_mode = 0
     shot_mode = 0
     destroyed = {}
@@ -117,7 +113,6 @@ def run_game(screen, images, fn, lives, score):
         if game.leftmost_invader() == -1:    # If the player has won
             break
         cl.tick(60)
-        t += 1
         screen.fill((0, 128, 255))
         draw_mouse_pos(screen, fn, pygame.mouse.get_pos()[0], pygame.mouse.get_pos()[1])
         draw_shots(screen, game, images, shot_mode)
@@ -131,26 +126,22 @@ def run_game(screen, images, fn, lives, score):
                 return [game.score, 0]
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_LEFT:
-                    left = True
+                    left = 1
                 if event.key == pygame.K_RIGHT:
-                    right = True
+                    right = 1
                 if event.key == pygame.K_SPACE:
-                    space = True
+                    space = 1
             elif event.type == pygame.KEYUP:
                 if event.key == pygame.K_LEFT:
-                    left = False
+                    left = 0
                 if event.key == pygame.K_RIGHT:
-                    right = False
+                    right = 0
                 if event.key == pygame.K_SPACE:
-                    space = False
-        if t % shot_step == 0:
+                    space = 0
+        if game.t % shot_step == 0:
             shot_mode = 1 - shot_mode
-        if t % invader_step == 0:
-            invader_dir = game.move_invaders(invader_dir)
-            invader_mode = 1-invader_mode
-            steps += 1
-            if steps % 36 == 0 and invader_step > 2:
-                invader_step -= 2
+        if game.move_invaders():
+            invader_mode = 1 - invader_mode
         game.move_spaceship(left, right)
         game.spaceship_shoot(space)
         game.invader_shoot()
@@ -173,21 +164,31 @@ def main():
     running = True
     score = 0
     lives = 3
-    round_score = 0
     while running:
         [round_score, lives] = run_game(screen, images, font, lives, score)
         score += round_score
+        if lives == 0:
+            running = False
     highscores_read = open("highscores.txt")
     highscore_list = []
     added = False
-    for highscore in highscores_read:
-        highscore_list.append(highscore)
-        if score > highscore and not added:
+    old_scores = highscores_read.readlines()
+    for highscore1 in old_scores:
+        highscorenum = int(highscore1.strip("\n"))
+        if score > highscorenum and not added:
             highscore_list.append(score)
-            added = False
+            added = True
+        highscore_list.append(highscorenum)
+    if not added:
+        highscore_list.append(score)
+    highscores_read.close()
+
     highscores_write = open("highscores.txt", "w")
-    for highscore in highscore_list:
-        highscores_write.write(highscore)
+    for highscore2 in highscore_list:
+        highscores_write.write(str(highscore2) + "\n")
+    highscores_write.close()
+
 
 if __name__ == '__main__':
+
     main()
